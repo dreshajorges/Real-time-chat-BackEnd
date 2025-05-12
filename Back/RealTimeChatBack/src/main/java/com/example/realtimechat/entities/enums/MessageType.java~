@@ -1,0 +1,4 @@
+package com.example.realtimechat.entities.enums;
+
+public enum MessageType {
+}
