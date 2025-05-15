@@ -18,12 +18,6 @@ public class UserController {
         this.userService = userService;
     }
 
-
-    @PostMapping
-    public ResponseEntity<UserEntity> create(@RequestBody UserEntity user) {
-        return ResponseEntity.ok(userService.create(user));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<Optional<UserEntity>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.findById(id));

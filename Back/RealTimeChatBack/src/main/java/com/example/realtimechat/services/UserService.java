@@ -8,9 +8,6 @@ import java.util.Optional;
 
 public interface UserService {
 
-
-    UserEntity create (UserEntity newUser);
-
     Optional<UserEntity> findById(Long id);
 
     List<UserEntity> findAll();

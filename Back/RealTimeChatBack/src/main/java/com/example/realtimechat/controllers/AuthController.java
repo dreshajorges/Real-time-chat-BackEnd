@@ -5,10 +5,7 @@ import com.example.realtimechat.entities.dtos.UserLoginRequest;
 import com.example.realtimechat.entities.dtos.UserRegisterRequest;
 import com.example.realtimechat.services.serviceImpl.AuthServiceImpl;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin("*")
@@ -22,12 +19,15 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<UserAuthResponse> signUp(UserRegisterRequest userRegisterRequest){
+    public ResponseEntity<UserAuthResponse> signUp(@RequestBody UserRegisterRequest userRegisterRequest){
         return ResponseEntity.ok(authService.signUp(userRegisterRequest));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserAuthResponse> login(UserLoginRequest userLoginRequest){
+    public ResponseEntity<UserAuthResponse> login(@RequestBody UserLoginRequest userLoginRequest){
         return ResponseEntity.ok(authService.login(userLoginRequest));
     }
 }
+
+// "email": "john.doe@example.com",
+//  "password": "securePassword123"
