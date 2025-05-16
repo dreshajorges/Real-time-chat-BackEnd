@@ -29,5 +29,5 @@ public class AuthController {
     }
 }
 
-// "email": "dreshajorges@gmail.com",
-//  "password": "orges123"
+// "email": "john.doe@example.com",
+//  "password": "securePassword123"
