@@ -11,16 +11,15 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").withSockJS();
-        //.setAllowedOrigins me provu nese sbon
-        //withSockJS osht fallback per browserat qe se suportojn WebSockets
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/user"); // Enables private user queues
+        config.setApplicationDestinationPrefixes("/app"); // Prefix for client sends
+        config.setUserDestinationPrefix("/user"); // Prefix for @SendToUser
     }
 
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes("/app"); //per mi handle mesazhet
-        registry.enableSimpleBroker("/topic"); //per me subscribe ne topic te caktum
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS(); // SockJS fallback
     }
 }
 

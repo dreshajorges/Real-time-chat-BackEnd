@@ -1,4 +1,4 @@
-package com.example.realtimechat.configs;
+package com.example.realtimechat.configs.websocket;
 
 import com.example.realtimechat.entities.ChatMessage;
 import com.example.realtimechat.entities.enums.MessageType;

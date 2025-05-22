@@ -1,5 +1,6 @@
 package com.example.realtimechat.controllers;
 
+import com.example.realtimechat.entities.ChatMessage;
 import com.example.realtimechat.entities.Message;
 import com.example.realtimechat.repositories.MessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
