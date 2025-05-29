@@ -1,8 +1,8 @@
 package com.example.realtimechat.controllers;
 
 import com.example.realtimechat.entities.Message;
-import com.example.realtimechat.repositories.MessageRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.realtimechat.entities.enums.MessageType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -10,26 +10,41 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.security.Principal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Controller
+@RequiredArgsConstructor
 public class ChatController {
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    @Autowired
-    private MessageRepository messageRepository;
+    @MessageMapping("/chat.sendMessage")
+    @SendTo("/topic/public")
+    public Message sendMessage(@Payload Message chatMessage) {
+        chatMessage.setType(MessageType.CHAT);
+        chatMessage.setTimestamp(Instant.now().toEpochMilli());
+        return chatMessage;
+    }
 
-    @MessageMapping("/chat")
-    public void sendMessage(@Payload Message message, Principal principal) {
-        message.setSender(principal.getName()); // authenticated user
-        message.setTime(LocalDateTime.now());
+    @MessageMapping("/chat.addUser")
+    @SendTo("/topic/public")
+    public Message addUser(@Payload Message chatMessage,
+                               SimpMessageHeaderAccessor headerAccessor) {
+        headerAccessor.getSessionAttributes().put("username", chatMessage.getFrom());
+        chatMessage.setType(MessageType.JOIN);
+        chatMessage.setTimestamp(Instant.now().toEpochMilli());
+        return chatMessage;
+    }
 
-        messageRepository.save(message);
-
+    @MessageMapping("/chat.privateMessage")
+    public void sendPrivateMessage(@Payload Message chatMessage) {
+        chatMessage.setType(MessageType.PRIVATE);
+        chatMessage.setTimestamp(Instant.now().toEpochMilli());
+        // send to /user/{to}/queue/private
         messagingTemplate.convertAndSendToUser(
-                message.getRecipient(), "/queue/messages", message);
+                chatMessage.getTo(),
+                "/queue/private",
+                chatMessage
+        );
     }
 }

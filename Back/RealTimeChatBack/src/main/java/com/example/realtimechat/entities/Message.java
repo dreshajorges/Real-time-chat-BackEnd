@@ -1,25 +1,18 @@
 package com.example.realtimechat.entities;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.*;
+import com.example.realtimechat.entities.enums.MessageType;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
-@Builder
+@AllArgsConstructor
 public class Message {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    private MessageType type;
+    private String from;
+    private String to;
     private String content;
-    private String sender;
-    private String recipient;
-    private LocalDateTime time = LocalDateTime.now();
+    private long timestamp;
 }

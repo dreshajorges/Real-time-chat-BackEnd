@@ -42,7 +42,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                 .withSockJS();
 
         registry.addEndpoint("/ws/chat/raw")
-                .setAllowedOrigins("*")
+                .setAllowedOrigins("http://localhost:5173")
                 .addInterceptors(jwtHandshakeInterceptor);
     }
 
