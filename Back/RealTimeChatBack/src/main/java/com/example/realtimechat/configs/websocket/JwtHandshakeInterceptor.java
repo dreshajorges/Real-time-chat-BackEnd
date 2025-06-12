@@ -35,12 +35,13 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             return false;
         }
 
-        String authHeader = servletReq.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // parse query string for ?token=...
+        String query = servletReq.getURI().getQuery(); // e.g. "token=abc.def.ghi"
+        if (query == null || !query.startsWith("token=")) {
             return false;
         }
+        String token = query.substring("token=".length());
 
-        String token = authHeader.substring(7);
         String username = jwtService.extractUsername(token);
         if (username == null) {
             return false;
@@ -51,13 +52,11 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             return false;
         }
 
-        // build a Principal so Spring SecurityContext can use it
-        Claims claims = jwtService.extractAllClaims(token);
-        Principal principal = () -> claims.getSubject();
+        Principal principal = () -> username;
         attributes.put("principal", principal);
-
         return true;
     }
+
 
     @Override
     public void afterHandshake(ServerHttpRequest request,
