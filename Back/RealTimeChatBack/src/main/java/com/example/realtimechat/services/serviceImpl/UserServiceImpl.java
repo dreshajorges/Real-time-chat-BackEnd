@@ -4,11 +4,13 @@ import com.example.realtimechat.entities.UserEntity;
 import com.example.realtimechat.infrastructure.exceptions.NotFoundException;
 import com.example.realtimechat.repositories.UserRepository;
 import com.example.realtimechat.services.UserService;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -57,4 +59,35 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.save(existingUser);
     }
+
+    @Override
+    public List<UserEntity> searchUsers(String q, String myEmail) {
+        return userRepository
+                .findByEmailContainingIgnoreCaseOrNameContainingIgnoreCase(q, q).stream()
+                .filter(u -> !u.getUsername().equals(myEmail))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<UserEntity> findFriendsByEmail(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        // return a List copy of the Set for JSON serialization
+        return List.copyOf(user.getFriends());
+    }
+
+    @Override
+    @Transactional
+    public void addFriend(String myEmail, Long friendId) {
+        UserEntity me     = userRepository.findByEmail(myEmail)
+                .orElseThrow(() -> new NotFoundException("me not found"));
+        UserEntity other  = userRepository.findById(friendId)
+                .orElseThrow(() -> new NotFoundException("friend not found"));
+
+        me.getFriends().add(other);
+        userRepository.save(me);
+    }
+
+
 }

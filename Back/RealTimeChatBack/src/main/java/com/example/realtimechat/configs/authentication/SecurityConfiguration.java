@@ -26,34 +26,44 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(req -> req
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        // public auth endpoints
                         .requestMatchers("/api/chat/auth/**").permitAll()
+                        // allow SockJS handshake (GET /ws/**)
                         .requestMatchers(HttpMethod.GET, "/ws/**").permitAll()
-                        .requestMatchers("/api/chat/users").hasAuthority("ADMIN")
-                        .anyRequest().authenticated())
-                .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                        // allow any authenticated user to **read** users (your “friends” list)
+                        .requestMatchers(HttpMethod.GET, "/api/chat/users/**").authenticated()
+
+                        // but only ADMIN can delete or update users
+                        .requestMatchers(HttpMethod.DELETE, "/api/chat/users/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/chat/users/**").hasAuthority("ADMIN")
+
+                        // everything else needs auth
+                        .anyRequest().authenticated()
+                )
+                // make it stateless
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // your JWT filter
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
-        //Make the below setting as * to allow connection from any hos
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "DELETE", "PUT"));
-        corsConfiguration.setAllowCredentials(true);
-        corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setMaxAge(3600L);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration);
-        return source;
+        CorsConfiguration cors = new CorsConfiguration();
+        cors.setAllowedOrigins(List.of("http://localhost:5173"));
+        cors.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        cors.setAllowCredentials(true);
+        cors.setAllowedHeaders(List.of("*"));
+        cors.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
+        src.registerCorsConfiguration("/**", cors);
+        return src;
     }
 }
-

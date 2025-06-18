@@ -17,4 +17,10 @@ public interface UserService {
     void deleteAll();
 
     UserEntity update (Long id, UserEntity newUser);
+
+    List<UserEntity> searchUsers(String q, String myEmail);
+
+    List<UserEntity> findFriendsByEmail(String email);
+
+    void addFriend(String myEmail, Long friendId);
 }

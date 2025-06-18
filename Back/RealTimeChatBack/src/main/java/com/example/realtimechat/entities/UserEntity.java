@@ -14,7 +14,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -36,6 +38,15 @@ public class UserEntity implements UserDetails, HasId<Long> {
     private String email;
 
     private String password;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_friends",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "friend_id")
+    )
+
+    private Set<UserEntity> friends = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     private Roles role = Roles.USER;
