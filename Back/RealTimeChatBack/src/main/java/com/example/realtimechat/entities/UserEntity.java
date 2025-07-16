@@ -4,52 +4,53 @@ import com.example.realtimechat.entities.enums.Gender;
 import com.example.realtimechat.entities.enums.Roles;
 import com.example.realtimechat.infrastructure.helpers.HasId;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+// Exclude friends from equals/hashCode to avoid infinite recursion
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class UserEntity implements UserDetails, HasId<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
+
     private String name;
     private String surname;
     private LocalDate birthdate;
     private Gender gender;
 
     @Column(unique = true)
+    @EqualsAndHashCode.Include
     private String email;
 
     private String password;
 
-    @ManyToMany
+    @Enumerated(EnumType.STRING)
+    private Roles role = Roles.USER;
+
+    // Excluded from equals/hashCode
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_friends",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "friend_id")
     )
-
+    @Builder.Default
     private Set<UserEntity> friends = new HashSet<>();
-
-    @Enumerated(EnumType.STRING)
-    private Roles role = Roles.USER;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -62,11 +63,13 @@ public class UserEntity implements UserDetails, HasId<Long> {
     }
 
     @Override
-    public String getPassword() { //qikjo sussy baka
+    public String getPassword() {
         return password;
     }
 
+    // Always return true unless you have logic
+    @Override public boolean isAccountNonExpired()     { return true; }
+    @Override public boolean isAccountNonLocked()      { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled()               { return true; }
 }
-
-//TODO nese sbon diqka me security me kqyr te UserDetails interface
-

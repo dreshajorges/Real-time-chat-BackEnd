@@ -1,6 +1,7 @@
 package com.example.realtimechat.controllers;
 
 import com.example.realtimechat.entities.UserEntity;
+import com.example.realtimechat.entities.dtos.FriendDto;
 import com.example.realtimechat.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +21,17 @@ public class UserController {
     }
 
     @GetMapping("/friends")
-    public ResponseEntity<List<UserEntity>> getMyFriends(Principal principal) {
-        String me = principal.getName();
-        List<UserEntity> friends = userService.findFriendsByEmail(me);
-        return ResponseEntity.ok(friends);
+    public ResponseEntity<List<FriendDto>> getMyFriends(Principal principal) {
+        var friends = userService.findFriendsByEmail(principal.getName());
+        var dtoList = friends.stream()
+                .map(u -> new FriendDto(
+                        u.getId(),
+                        u.getName(),
+                        u.getSurname(),
+                        u.getEmail()
+                ))
+                .toList();
+        return ResponseEntity.ok(dtoList);
     }
 
     @PostMapping("/{id}/friends")
@@ -49,12 +57,16 @@ public class UserController {
 
     // in UserController.java
     @GetMapping("/search")
-    public ResponseEntity<List<UserEntity>> searchUsers(
-            @RequestParam("q") String query,
-            Principal principal) {
-        // delegate to your service; filter out the caller themself
-        List<UserEntity> matches = userService.searchUsers(query, principal.getName());
-        return ResponseEntity.ok(matches);
+    public ResponseEntity<List<FriendDto>> searchUsers(
+            @RequestParam("q") String q,
+            Principal principal
+    ) {
+        String me = principal.getName();
+        List<UserEntity> found = userService.searchByEmail(q, me);
+        List<FriendDto> dtos = found.stream()
+                .map(u -> new FriendDto(u.getId(), u.getName(), u.getSurname(), u.getEmail()))
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
 
 

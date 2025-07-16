@@ -30,26 +30,36 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // public auth endpoints
-                        .requestMatchers("/api/chat/auth/**").permitAll()
-                        // allow SockJS handshake (GET /ws/**)
+                        // 1) Public login/auth
+                        .requestMatchers("/","/api/chat/auth/**").permitAll()
+
+                        // 2) SockJS WS handshake
                         .requestMatchers(HttpMethod.GET, "/ws/**").permitAll()
 
-                        // allow any authenticated user to **read** users (your “friends” list)
+                        // 3) Friend-list and search
+                        .requestMatchers(HttpMethod.GET,  "/api/chat/users/friends").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/chat/users/search").authenticated()
+                        // ** ADDED: allow adding friends **
+                        .requestMatchers(HttpMethod.POST, "/api/chat/users/*/friends").authenticated()
+
+                        // 4) History endpoint
+                        .requestMatchers(HttpMethod.GET, "/api/chat/history/**").authenticated()
+
+                        // 5) (Optional) list all users
                         .requestMatchers(HttpMethod.GET, "/api/chat/users/**").authenticated()
 
-                        // but only ADMIN can delete or update users
+                        // 6) Admin-only user mutations
                         .requestMatchers(HttpMethod.DELETE, "/api/chat/users/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.PUT,    "/api/chat/users/**").hasAuthority("ADMIN")
 
-                        // everything else needs auth
+                        // 7) Everything else requires authentication
                         .anyRequest().authenticated()
                 )
-                // make it stateless
+                // Stateless session
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // your JWT filter
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        ;
 
         return http.build();
     }
@@ -62,6 +72,7 @@ public class SecurityConfiguration {
         cors.setAllowCredentials(true);
         cors.setAllowedHeaders(List.of("*"));
         cors.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
         src.registerCorsConfiguration("/**", cors);
         return src;

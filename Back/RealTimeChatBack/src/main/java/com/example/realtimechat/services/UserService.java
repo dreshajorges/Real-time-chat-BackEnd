@@ -18,9 +18,10 @@ public interface UserService {
 
     UserEntity update (Long id, UserEntity newUser);
 
-    List<UserEntity> searchUsers(String q, String myEmail);
-
     List<UserEntity> findFriendsByEmail(String email);
 
     void addFriend(String myEmail, Long friendId);
+
+    List<UserEntity> searchByEmail (String q, String myEmail);
+
 }

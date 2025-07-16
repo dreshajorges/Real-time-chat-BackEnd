@@ -1,3 +1,4 @@
+// src/main/java/com/example/realtimechat/services/serviceImpl/UserServiceImpl.java
 package com.example.realtimechat.services.serviceImpl;
 
 import com.example.realtimechat.entities.UserEntity;
@@ -18,7 +19,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -45,49 +47,47 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserEntity update(Long id, UserEntity newUser) {
-        Optional<UserEntity> existingUserOptional = userRepository.findById(id);
-        if (existingUserOptional.isEmpty()){
-            throw new NotFoundException("User was not found");
-        }
-
-        UserEntity existingUser = existingUserOptional.get();
-
-        existingUser.setEmail(newUser.getEmail());
-
-        String encodedPassword = passwordEncoder.encode(newUser.getPassword());
-        existingUser.setPassword(encodedPassword);
-
-        return userRepository.save(existingUser);
-    }
-
-    @Override
-    public List<UserEntity> searchUsers(String q, String myEmail) {
-        return userRepository
-                .findByEmailContainingIgnoreCaseOrNameContainingIgnoreCase(q, q).stream()
-                .filter(u -> !u.getUsername().equals(myEmail))
-                .collect(Collectors.toList());
+        UserEntity existing = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        existing.setEmail(newUser.getEmail());
+        existing.setPassword(passwordEncoder.encode(newUser.getPassword()));
+        return userRepository.save(existing);
     }
 
     @Override
     @Transactional
-    public List<UserEntity> findFriendsByEmail(String email) {
-        UserEntity user = userRepository.findByEmail(email)
+    public List<UserEntity> findFriendsByEmail(String myEmail) {
+        UserEntity me = userRepository.findByEmail(myEmail)
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        // return a List copy of the Set for JSON serialization
-        return List.copyOf(user.getFriends());
+        // return a copy so we don’t accidentally serialize the JPA Set
+        return List.copyOf(me.getFriends());
     }
 
     @Override
     @Transactional
     public void addFriend(String myEmail, Long friendId) {
-        UserEntity me     = userRepository.findByEmail(myEmail)
-                .orElseThrow(() -> new NotFoundException("me not found"));
-        UserEntity other  = userRepository.findById(friendId)
-                .orElseThrow(() -> new NotFoundException("friend not found"));
-
+        UserEntity me = userRepository.findByEmail(myEmail)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        UserEntity other = userRepository.findById(friendId)
+                .orElseThrow(() -> new NotFoundException("Friend not found"));
         me.getFriends().add(other);
         userRepository.save(me);
     }
 
+    @Override
+    public List<UserEntity> searchByEmail(String q, String myEmail) {
+        // 1) get all matching email fragments
+        List<UserEntity> matches = userRepository.findByEmailContainingIgnoreCase(q);
 
+        // 2) load me + my friends
+        UserEntity me = userRepository.findByEmail(myEmail)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        var friendSet = me.getFriends();
+
+        // 3) filter out myself & existing friends
+        return matches.stream()
+                .filter(u -> !u.getEmail().equalsIgnoreCase(myEmail))
+                .filter(u -> !friendSet.contains(u))
+                .collect(Collectors.toList());
+    }
 }

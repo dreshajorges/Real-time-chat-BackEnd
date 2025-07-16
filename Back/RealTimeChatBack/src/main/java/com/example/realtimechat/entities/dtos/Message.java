@@ -1,18 +1,18 @@
-package com.example.realtimechat.entities;
+package com.example.realtimechat.entities.dtos;
 
 import com.example.realtimechat.entities.enums.MessageType;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Message {
-
     private MessageType type;
     private String from;
-    private String to;
+    private String to;         // null for broadcast
     private String content;
-    private long timestamp;
+    private Instant timestamp; // use Instant here
 }
