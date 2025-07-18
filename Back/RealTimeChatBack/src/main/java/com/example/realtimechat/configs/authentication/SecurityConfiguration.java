@@ -48,6 +48,9 @@ public class SecurityConfiguration {
                         // 5) (Optional) list all users
                         .requestMatchers(HttpMethod.GET, "/api/chat/users/**").authenticated()
 
+                        .requestMatchers(HttpMethod.POST,   "/api/chat/requests/**").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/chat/requests").authenticated()
+
                         // 6) Admin-only user mutations
                         .requestMatchers(HttpMethod.DELETE, "/api/chat/users/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.PUT,    "/api/chat/users/**").hasAuthority("ADMIN")

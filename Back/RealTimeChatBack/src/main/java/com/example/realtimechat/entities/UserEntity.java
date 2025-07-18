@@ -59,7 +59,7 @@ public class UserEntity implements UserDetails, HasId<Long> {
 
     @Override
     public String getUsername() {
-        return email;
+        return email;  //kjo e tregon se qka ko me return principal.getName()
     }
 
     @Override
