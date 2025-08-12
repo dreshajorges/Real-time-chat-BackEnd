@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @CrossOrigin("*")
@@ -89,4 +90,12 @@ public class UserController {
     }
 
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<UserEntity> patchUpdate(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> updates
+    ) {
+        UserEntity updated = userService.patchUpdate(id, updates);
+        return ResponseEntity.ok(updated);
+    }
 }

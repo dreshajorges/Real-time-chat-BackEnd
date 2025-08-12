@@ -4,6 +4,7 @@ import com.example.realtimechat.entities.UserEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface UserService {
@@ -24,4 +25,5 @@ public interface UserService {
 
     List<UserEntity> searchByEmail (String q, String myEmail);
 
+    UserEntity patchUpdate(Long id, Map<String, Object> updates);
 }

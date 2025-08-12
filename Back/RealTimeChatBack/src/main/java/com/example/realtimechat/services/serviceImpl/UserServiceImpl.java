@@ -10,8 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -45,12 +45,25 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteAll();
     }
 
+    /**
+     * MERGE‐style PUT: only overwrite fields when new values are non-null.
+     */
     @Override
     public UserEntity update(Long id, UserEntity newUser) {
         UserEntity existing = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        existing.setEmail(newUser.getEmail());
-        existing.setPassword(passwordEncoder.encode(newUser.getPassword()));
+
+        // update email if provided
+        if (newUser.getEmail() != null) {
+            existing.setEmail(newUser.getEmail());
+        }
+
+        // update password only if non-null and non-blank
+        String rawPw = newUser.getPassword();
+        if (rawPw != null && !rawPw.isBlank()) {
+            existing.setPassword(passwordEncoder.encode(rawPw));
+        }
+
         return userRepository.save(existing);
     }
 
@@ -59,7 +72,6 @@ public class UserServiceImpl implements UserService {
     public List<UserEntity> findFriendsByEmail(String myEmail) {
         UserEntity me = userRepository.findByEmail(myEmail)
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        // return a copy so we don’t accidentally serialize the JPA Set
         return List.copyOf(me.getFriends());
     }
 
@@ -76,18 +88,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserEntity> searchByEmail(String q, String myEmail) {
-        // 1) get all matching email fragments
         List<UserEntity> matches = userRepository.findByEmailContainingIgnoreCase(q);
-
-        // 2) load me + my friends
         UserEntity me = userRepository.findByEmail(myEmail)
                 .orElseThrow(() -> new NotFoundException("User not found"));
         var friendSet = me.getFriends();
-
-        // 3) filter out myself & existing friends
         return matches.stream()
                 .filter(u -> !u.getEmail().equalsIgnoreCase(myEmail))
                 .filter(u -> !friendSet.contains(u))
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    @Override
+    public UserEntity patchUpdate(Long id, Map<String, Object> updates) {
+        UserEntity existing = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (updates.containsKey("email")) {
+            existing.setEmail((String) updates.get("email"));
+        }
+        if (updates.containsKey("password")) {
+            String raw = (String) updates.get("password");
+            if (raw != null && !raw.isBlank()) {
+                existing.setPassword(passwordEncoder.encode(raw));
+            }
+        }
+        return userRepository.save(existing);
     }
 }
